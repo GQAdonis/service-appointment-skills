@@ -1,0 +1,26 @@
+name: validate-skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependency-free spec checks
+        run: python scripts/validate_skills.py --root skills
+      - name: Official skills-ref validator
+        run: |
+          pip install "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref"
+          for d in skills/*/; do skills-ref validate "$d"; done
+      - name: Smoke-test bundled scripts
+        run: |
+          python skills/service-appointment-coordinator/scripts/render_note.py annotate \
+            --name "A. Tester" --phone 555-0100 --when "Mon, 12-4 p.m." \
+            --what "line severed under the gate" --needs "re-run the drop" >/dev/null
